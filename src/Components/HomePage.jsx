@@ -12,14 +12,26 @@ import {
 import ChatCard from "./ChatCard/ChatCard";
 import MessageCard from "./MessageCard/MessageCard";
 import "./HomePage.css";
+import { useNavigate } from "react-router-dom";
+import Profile from "./Profile/Profile";
 
 const HomePage = () => {
   const [querys, setQuerys] = useState(null);
   const [currentChat, setCurrentChat] = useState(null);
   const [content, setContent] = useState("");
+  const [isProfile, setIsProfile] = useState(false);
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    // navigate("/profile");
+    setIsProfile(true);
+  };
 
   const handleClickOnchatCard = () => {
     setCurrentChat(true);
+  };
+  const handleCloseOpenProfile = () => {
+    setIsProfile(false);
   };
 
   const handleSearch = () => {};
@@ -30,47 +42,63 @@ const HomePage = () => {
       <div className="py-14 bg-[#00a884] w-full"></div>
       <div className="flex bg-[#F8F9FB] h-[90vh] w-[96vw] left-[2vw] absolute top-[5vh]">
         <div className="left w-[30%] h-full bg-[#e8e9ec]">
-          <div className="w-full">
-            <div className="flex justify-between items-center p-3">
-              <div className="flex items-center space-x-3">
-                <img
-                  className="rounded-full w-10 h-10 cursor-pointer "
-                  src="https://vapa.vn/wp-content/uploads/2022/12/hinh-nen-3d-4k-005.jpg"
-                  alt=""
+          {/* profile */}
+          {isProfile && (
+            <div className="w-full h-full">
+              <Profile handleCloseOpenProfile={handleCloseOpenProfile} />
+            </div>
+          )}
+          {!isProfile && (
+            <div className="w-full">
+              {/* Home */}
+              <div className="flex justify-between items-center p-3">
+                <div
+                  onClick={handleNavigate}
+                  className="flex items-center space-x-3"
+                >
+                  <img
+                    className="rounded-full w-10 h-10 cursor-pointer "
+                    src="https://vapa.vn/wp-content/uploads/2022/12/hinh-nen-3d-4k-005.jpg"
+                    alt=""
+                  />
+                  <p>username</p>
+                </div>
+                <div className="space-x-3 text-2xl flex">
+                  <TbCircleDashed
+                    className="cursor-pointer"
+                    onClick={() => navigate("/status")}
+                  />
+                  <BiCommentDetail />
+                </div>
+              </div>
+              {/* search */}
+              <div className="relative flex justify-center items-center bg-white py-4 px-3">
+                <input
+                  className="border-none outline-none bg-slate-200 rounded-md w-[91%] pl-9 py-2"
+                  type="text"
+                  placeholder="Search or start new Chat"
+                  onChange={(e) => {
+                    setQuerys(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
                 />
-                <p>username</p>
+                <AiOutlineSearch className="left-5 top-7 absolute" />
+                <div>
+                  <BsFilter className="ml-4 text-3xl" />
+                </div>
               </div>
-              <div className="space-x-3 text-2xl flex">
-                <TbCircleDashed />
-                <BiCommentDetail />
-              </div>
-            </div>
-            <div className="relative flex justify-center items-center bg-white py-4 px-3">
-              <input
-                className="border-none outline-none bg-slate-200 rounded-md w-[91%] pl-9 py-2"
-                type="text"
-                placeholder="Search or start new Chat"
-                onChange={(e) => {
-                  setQuerys(e.target.value);
-                  handleSearch(e.target.value);
-                }}
-              />
-              <AiOutlineSearch className="left-5 top-7 absolute" />
-              <div>
-                <BsFilter className="ml-4 text-3xl" />
+              {/* all user */}
+              <div className="bg-white overflow-y-scroll h-[73.3333vh] px-3">
+                {querys &&
+                  [1, 1, 1, 1, 1].map((item) => (
+                    <div onClick={handleClickOnchatCard}>
+                      <hr />
+                      <ChatCard />
+                    </div>
+                  ))}
               </div>
             </div>
-            {/* all user */}
-            <div className="bg-white overflow-y-scroll h-[73.3333vh] px-3">
-              {querys &&
-                [1, 1, 1, 1, 1].map((item) => (
-                  <div onClick={handleClickOnchatCard}>
-                    <hr />
-                    <ChatCard />
-                  </div>
-                ))}
-            </div>
-          </div>
+          )}
         </div>
         {/* defaults whats up page */}
         {!currentChat && (
@@ -95,7 +123,7 @@ const HomePage = () => {
               <div className="flex justify-between">
                 <div className="py-3 space-x-4 flex items-center px-3">
                   <img
-                    className="h-10 w-10 rounded-full"
+                    className="h-10 w-10 rounded-full object-cover"
                     src="https://antimatter.vn/wp-content/uploads/2022/10/hinh-anh-3d-800x500.jpg"
                     alt=""
                   />

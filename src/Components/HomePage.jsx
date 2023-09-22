@@ -9,11 +9,15 @@ import {
   BsMicFill,
   BsThreeDotsVertical,
 } from "react-icons/bs";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+
 import ChatCard from "./ChatCard/ChatCard";
 import MessageCard from "./MessageCard/MessageCard";
 import "./HomePage.css";
 import { useNavigate } from "react-router-dom";
 import Profile from "./Profile/Profile";
+import CreateGroup from "./Group/CreateGroup";
 
 const HomePage = () => {
   const [querys, setQuerys] = useState(null);
@@ -21,6 +25,16 @@ const HomePage = () => {
   const [content, setContent] = useState("");
   const [isProfile, setIsProfile] = useState(false);
   const navigate = useNavigate();
+  const [isGroup, setIsGroup] = useState(false);
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleNavigate = () => {
     // navigate("/profile");
@@ -37,6 +51,9 @@ const HomePage = () => {
   const handleSearch = () => {};
 
   const handleCreateNewMessage = () => {};
+  const handleCreateGroup = () => {
+    setIsGroup(true);
+  };
   return (
     <div className="relative">
       <div className="py-14 bg-[#00a884] w-full"></div>
@@ -48,7 +65,13 @@ const HomePage = () => {
               <Profile handleCloseOpenProfile={handleCloseOpenProfile} />
             </div>
           )}
-          {!isProfile && (
+          {/* group */}
+          {isGroup && (
+            <div className="w-full h-full">
+              <CreateGroup />
+            </div>
+          )}
+          {!isProfile && !isGroup && (
             <div className="w-full">
               {/* Home */}
               <div className="flex justify-between items-center p-3">
@@ -69,6 +92,30 @@ const HomePage = () => {
                     onClick={() => navigate("/status")}
                   />
                   <BiCommentDetail />
+                  <div>
+                    <BsThreeDotsVertical
+                      id="basic-button"
+                      aria-controls={open ? "basic-menu" : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={open ? "true" : undefined}
+                      onClick={handleClick}
+                    />
+                    <Menu
+                      id="basic-menu"
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      MenuListProps={{
+                        "aria-labelledby": "basic-button",
+                      }}
+                    >
+                      <MenuItem onClick={handleClose}>Profile</MenuItem>
+                      <MenuItem onClick={handleCreateGroup}>
+                        Create Group
+                      </MenuItem>
+                      <MenuItem onClick={handleClose}>Logout</MenuItem>
+                    </Menu>
+                  </div>
                 </div>
               </div>
               {/* search */}

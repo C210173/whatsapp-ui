@@ -10,7 +10,7 @@ const initialState = {
   signup: null,
   signin: null,
   reqUser: null,
-  searchUser: null,
+  searchUser: [],
   updatedUser: null,
 };
 export const authReducer = (store = initialState, { type, payload }) => {

@@ -19,7 +19,9 @@ import { useNavigate } from "react-router-dom";
 import Profile from "./Profile/Profile";
 import CreateGroup from "./Group/CreateGroup";
 import { useDispatch, useSelector } from "react-redux";
-import { currentUser, logoutAction } from "../Redux/Auth/Action";
+import { currentUser, logoutAction, searchUser } from "../Redux/Auth/Action";
+import { createChat, getUsersChat } from "../Redux/Chat/Action";
+import { createMessage, getAllMessage } from "../Redux/Message/Action";
 
 const HomePage = () => {
   const [querys, setQuerys] = useState(null);
@@ -31,7 +33,7 @@ const HomePage = () => {
   const dispatch = useDispatch();
 
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const { auth } = useSelector((store) => store);
+  const { auth, chat, message } = useSelector((store) => store);
   const token = localStorage.getItem("token");
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -40,22 +42,42 @@ const HomePage = () => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  useEffect(() => {
+    dispatch(getUsersChat({ token }));
+  }, [chat.createChat, chat.CreateGroup]);
 
   const handleNavigate = () => {
     // navigate("/profile");
     setIsProfile(true);
   };
 
-  const handleClickOnchatCard = () => {
-    setCurrentChat(true);
+  const handleClickOnChatCard = (userId) => {
+    dispatch(createChat({ token, data: { userId } }));
+    setQuerys("");
   };
   const handleCloseOpenProfile = () => {
     setIsProfile(false);
   };
 
-  const handleSearch = () => {};
+  const handleSearch = (keyword) => {
+    if (keyword.trim() === "") {
+      return;
+    }
+    dispatch(searchUser({ keyword, token }));
+  };
 
-  const handleCreateNewMessage = () => {};
+  const handleCreateNewMessage = () => {
+    dispatch(
+      createMessage({
+        token,
+        data: { chatId: currentChat.id, content: content },
+      })
+    );
+  };
+  useEffect(() => {
+    if (currentChat?.id)
+      dispatch(getAllMessage({ chatId: currentChat.id, token }));
+  }, [currentChat, message.newMessage]);
   const handleCreateGroup = () => {
     setIsGroup(true);
   };
@@ -63,16 +85,20 @@ const HomePage = () => {
   useEffect(() => {
     dispatch(currentUser(token));
   }, [token]);
-
   const handleLogout = () => {
     dispatch(logoutAction());
-    navigate("/login");
+    navigate("/signup");
   };
   useEffect(() => {
     if (!auth.reqUser) {
-      navigate("/login");
+      navigate("/signup");
     }
   }, [auth.reqUser]);
+
+  const handleCurrentChat = (item) => {
+    setCurrentChat(item);
+  };
+  console.log("current chat", currentChat);
   return (
     <div className="relative">
       <div className="py-14 bg-[#00a884] w-full"></div>
@@ -100,7 +126,10 @@ const HomePage = () => {
                 >
                   <img
                     className="rounded-full w-10 h-10 cursor-pointer "
-                    src="https://vapa.vn/wp-content/uploads/2022/12/hinh-nen-3d-4k-005.jpg"
+                    src={
+                      auth.reqUser?.profilePicture ||
+                      "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+                    }
                     alt=""
                   />
                   <p>{auth.reqUser?.fullName}</p>
@@ -156,10 +185,50 @@ const HomePage = () => {
               {/* all user */}
               <div className="bg-white overflow-y-scroll h-[73.3333vh] px-3">
                 {querys &&
-                  [1, 1, 1, 1, 1].map((item) => (
-                    <div onClick={handleClickOnchatCard}>
+                  auth.searchUser?.map((item) => (
+                    <div onClick={() => handleClickOnChatCard(item.id)}>
                       <hr />
-                      <ChatCard />
+                      <ChatCard
+                        name={item.fullName}
+                        userImg={
+                          item.profilePicture ||
+                          "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+                        }
+                      />
+                    </div>
+                  ))}
+
+                {chat.chats.length > 0 &&
+                  !querys &&
+                  chat.chats?.map((item) => (
+                    <div onClick={() => handleCurrentChat(item)}>
+                      <hr />
+                      {item.isGroup ? (
+                        <ChatCard
+                          name={item.chatName}
+                          userImg={
+                            item.chatImage ||
+                            "https://lambanner.com/wp-content/uploads/2020/08/MNT-DESIGN-XAY-DUNG-CONG-DONG-TRUC-TUYEN.jpg"
+                          }
+                        />
+                      ) : (
+                        <ChatCard
+                          isChat={true}
+                          name={
+                            auth.reqUser?.id !== item.users[0]?.id
+                              ? item.users[0].fullName
+                              : item.users[1].fullName
+                          }
+                          userImg={
+                            auth.reqUser?.id !==
+                            (item.users[0]?.id || item.users[1]?.id)
+                              ? item.users[0]?.profilePicture ||
+                                "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+                              : item.users[1]?.profilePicture ||
+                                "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+                          }
+                        />
+                      )}
                     </div>
                   ))}
               </div>
@@ -190,10 +259,26 @@ const HomePage = () => {
                 <div className="py-3 space-x-4 flex items-center px-3">
                   <img
                     className="h-10 w-10 rounded-full object-cover"
-                    src="https://antimatter.vn/wp-content/uploads/2022/10/hinh-anh-3d-800x500.jpg"
+                    src={
+                      currentChat.isGroup
+                        ? currentChat.chatImage ||
+                          "https://lambanner.com/wp-content/uploads/2020/08/MNT-DESIGN-XAY-DUNG-CONG-DONG-TRUC-TUYEN.jpg"
+                        : auth.reqUser?.id !==
+                          (currentChat.users[0]?.id || currentChat.users[1]?.id)
+                        ? currentChat.users[0]?.profilePicture ||
+                          "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+                        : currentChat.users[1]?.profilePicture ||
+                          "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+                    }
                     alt=""
                   />
-                  <p>{auth.reqUser?.fullName}</p>
+                  <p>
+                    {currentChat.isGroup
+                      ? currentChat.chatName
+                      : auth.reqUser?.id === currentChat.users[0].id
+                      ? currentChat.users[1].fullName
+                      : currentChat.users[0].fullName}
+                  </p>
                 </div>
                 <div className="flex py-3 space-x-4 items-center px-3">
                   <AiOutlineSearch />
@@ -204,12 +289,13 @@ const HomePage = () => {
             {/* message section */}
             <div className="px-10 h-[85vh] overflow-y-scroll">
               <div className="space-y-1 flex flex-col justify-center mt-20 py-2">
-                {[1, 1, 1, 1, 1].map((item, i) => (
-                  <MessageCard
-                    isReqUserMessage={i % 2 === 0}
-                    content={"message"}
-                  />
-                ))}
+                {message.messages.length > 0 &&
+                  message.messages?.map((item, i) => (
+                    <MessageCard
+                      isReqUserMessage={item.user.id !== auth.reqUser.id}
+                      content={item.content}
+                    />
+                  ))}
               </div>
             </div>
             {/* footer part */}

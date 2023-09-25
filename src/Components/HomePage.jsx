@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TbCircleDashed } from "react-icons/tb";
 import { BiCommentDetail } from "react-icons/bi";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -18,6 +18,8 @@ import "./HomePage.css";
 import { useNavigate } from "react-router-dom";
 import Profile from "./Profile/Profile";
 import CreateGroup from "./Group/CreateGroup";
+import { useDispatch, useSelector } from "react-redux";
+import { currentUser, logoutAction } from "../Redux/Auth/Action";
 
 const HomePage = () => {
   const [querys, setQuerys] = useState(null);
@@ -26,8 +28,11 @@ const HomePage = () => {
   const [isProfile, setIsProfile] = useState(false);
   const navigate = useNavigate();
   const [isGroup, setIsGroup] = useState(false);
+  const dispatch = useDispatch();
 
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const { auth } = useSelector((store) => store);
+  const token = localStorage.getItem("token");
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -54,6 +59,20 @@ const HomePage = () => {
   const handleCreateGroup = () => {
     setIsGroup(true);
   };
+
+  useEffect(() => {
+    dispatch(currentUser(token));
+  }, [token]);
+
+  const handleLogout = () => {
+    dispatch(logoutAction());
+    navigate("/login");
+  };
+  useEffect(() => {
+    if (!auth.reqUser) {
+      navigate("/login");
+    }
+  }, [auth.reqUser]);
   return (
     <div className="relative">
       <div className="py-14 bg-[#00a884] w-full"></div>
@@ -84,7 +103,7 @@ const HomePage = () => {
                     src="https://vapa.vn/wp-content/uploads/2022/12/hinh-nen-3d-4k-005.jpg"
                     alt=""
                   />
-                  <p>username</p>
+                  <p>{auth.reqUser?.fullName}</p>
                 </div>
                 <div className="space-x-3 text-2xl flex">
                   <TbCircleDashed
@@ -113,7 +132,7 @@ const HomePage = () => {
                       <MenuItem onClick={handleCreateGroup}>
                         Create Group
                       </MenuItem>
-                      <MenuItem onClick={handleClose}>Logout</MenuItem>
+                      <MenuItem onClick={handleLogout}>Logout</MenuItem>
                     </Menu>
                   </div>
                 </div>
@@ -174,7 +193,7 @@ const HomePage = () => {
                     src="https://antimatter.vn/wp-content/uploads/2022/10/hinh-anh-3d-800x500.jpg"
                     alt=""
                   />
-                  <p>username</p>
+                  <p>{auth.reqUser?.fullName}</p>
                 </div>
                 <div className="flex py-3 space-x-4 items-center px-3">
                   <AiOutlineSearch />

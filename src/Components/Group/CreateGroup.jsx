@@ -3,17 +3,27 @@ import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import SelectedMember from "./SelectedMember";
 import ChatCard from "../ChatCard/ChatCard";
 import NewGroup from "./NewGroup";
+import { useDispatch, useSelector } from "react-redux";
+import { searchUser } from "../../Redux/Auth/Action";
 
-const CreateGroup = () => {
+const CreateGroup = ({ setIsGroup }) => {
   const [newGroup, setNewGroup] = useState(false);
   const [query, setQuery] = useState("");
   const [groupMember, setGroupMember] = useState(new Set());
+  const dispatch = useDispatch();
+  const token = localStorage.getItem("token");
+  const { auth } = useSelector((store) => store);
 
   const handleRemoveMember = (item) => {
     groupMember.delete(item);
     setGroupMember(groupMember);
   };
-  const handleSearch = (e) => {};
+  const handleSearch = (keyword) => {
+    if (keyword.trim() === "") {
+      return;
+    }
+    dispatch(searchUser({ keyword, token }));
+  };
 
   return (
     <div className="w-full h-full">
@@ -46,7 +56,7 @@ const CreateGroup = () => {
           </div>
           <div className="bg-white overflow-y-scroll h-[50.2vh]">
             {query &&
-              [1, 1, 1, 1].map((item) => (
+              auth.searchUser?.map((item) => (
                 <div
                   onClick={() => {
                     groupMember.add(item);
@@ -54,9 +64,13 @@ const CreateGroup = () => {
                     setQuery("");
                   }}
                   key={item?.id}
+                  className="px-3"
                 >
                   <hr />
-                  <ChatCard />
+                  <ChatCard
+                    userImg={item.profilePicture}
+                    name={item.fullName}
+                  />
                 </div>
               ))}
           </div>
@@ -73,7 +87,9 @@ const CreateGroup = () => {
           </div>
         </div>
       )}
-      {newGroup && <NewGroup />}
+      {newGroup && (
+        <NewGroup groupMember={groupMember} setIsGroup={setIsGroup} />
+      )}
     </div>
   );
 };

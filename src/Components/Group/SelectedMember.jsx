@@ -6,10 +6,13 @@ const SelectedMember = ({ handleRemoveMember, member }) => {
     <div className="flex items-center bg-slate-300 rounded-full">
       <img
         className="w-7 h-7 rounded-full"
-        src="https://vapa.vn/wp-content/uploads/2022/12/hinh-nen-3d-4k-005.jpg"
+        src={
+          member.profilePicture ||
+          "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+        }
         alt=""
       />
-      <p className="px-2">username</p>
+      <p className="px-2">{member.fullName}</p>
       <AiOutlineClose
         onClick={handleRemoveMember}
         className="pr-1 cursor-pointer"

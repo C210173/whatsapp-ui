@@ -113,7 +113,7 @@ const HomePage = () => {
           {/* group */}
           {isGroup && (
             <div className="w-full h-full">
-              <CreateGroup />
+              <CreateGroup setIsGroup={setIsGroup} />
             </div>
           )}
           {!isProfile && !isGroup && (
@@ -122,10 +122,10 @@ const HomePage = () => {
               <div className="flex justify-between items-center p-3">
                 <div
                   onClick={handleNavigate}
-                  className="flex items-center space-x-3"
+                  className="flex items-center space-x-3 cursor-pointer"
                 >
                   <img
-                    className="rounded-full w-10 h-10 cursor-pointer "
+                    className="rounded-full w-10 h-10 object-cover"
                     src={
                       auth.reqUser?.profilePicture ||
                       "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"

@@ -1,4 +1,3 @@
-import { async } from "q";
 import { BASE_API_URL } from "../../config/api";
 import {
   LOGIN,
@@ -80,12 +79,13 @@ export const searchUser = (data) => async (dispatch) => {
 
 export const updateUser = (data) => async (dispatch) => {
   try {
-    const res = await fetch(`${BASE_API_URL}/api/users/update/${data.id}`, {
-      method: "GET",
+    const res = await fetch(`${BASE_API_URL}/api/users/update`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${data.token}`,
       },
+      body: JSON.stringify(data.data),
     });
     const resData = await res.json();
     console.log("update user ", resData);

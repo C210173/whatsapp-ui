@@ -1,20 +1,62 @@
 import React, { useState } from "react";
 import { BsArrowLeft, BsCheck2, BsPencil } from "react-icons/bs";
+import { updateUser } from "../../Redux/Auth/Action";
+import { useDispatch, useSelector } from "react-redux";
 
 const Profile = ({ handleCloseOpenProfile }) => {
   const [flag, setFlag] = useState(false);
   const [username, setUsername] = useState(null);
+  const [tempPicture, setTempPicture] = useState(null);
+  const { auth } = useSelector((store) => store);
+  const dispatch = useDispatch();
 
   const handleFlag = () => {
     setFlag(true);
   };
   const handleCheckClick = () => {
     setFlag(false);
+    const data = {
+      token: localStorage.getItem("token"),
+      data: { fullName: username },
+    };
+    dispatch(updateUser(data));
   };
   const handleChange = (e) => {
     setUsername(e.target.value);
   };
 
+  const uploadToCloudnary = (pics) => {
+    const data = new FormData();
+    data.append("file", pics);
+    data.append("upload_preset", "whatsapp");
+    data.append("cloud_name", "dttlhvsas");
+    fetch("https://api.cloudinary.com/v1_1/dttlhvsas/image/upload", {
+      method: "POST",
+      body: data,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setTempPicture(data.url.toString());
+        // setMessage("profile image updated successfully")
+        // setOpen(true);
+        console.log("imgUrl ", data.url.toString());
+        const dataa = {
+          token: localStorage.getItem("token"),
+          data: { profilePicture: data.url.toString() },
+        };
+        dispatch(updateUser(dataa));
+      });
+  };
+
+  const handleUpdateName = (e) => {
+    const data = {
+      token: localStorage.getItem("token"),
+      data: { fullName: username },
+    };
+    if (e.target.key === "Enter") {
+      dispatch(updateUser(data));
+    }
+  };
   return (
     <div className="w-full h-full">
       <div className="flex items-center space-x-10 bg-[#008069] text-white pt-16 px-10 pb-5">
@@ -30,11 +72,20 @@ const Profile = ({ handleCloseOpenProfile }) => {
         <label htmlFor="imgInput">
           <img
             className="rounded-full w-[15vw] h-[15vw] cursor-pointer object-cover"
-            src="https://vapa.vn/wp-content/uploads/2022/12/hinh-nen-3d-4k-005.jpg"
+            src={
+              tempPicture ||
+              auth.reqUser?.profilePicture ||
+              "https://cdn.vectorstock.com/i/preview-1x/66/14/default-avatar-photo-placeholder-profile-picture-vector-21806614.jpg"
+            }
             alt=""
           />
         </label>
-        <input type="file" id="imgInput" className="hidden" />
+        <input
+          onChange={(e) => uploadToCloudnary(e.target.files[0])}
+          type="file"
+          id="imgInput"
+          className="hidden"
+        />
       </div>
 
       {/* name section */}
@@ -42,7 +93,7 @@ const Profile = ({ handleCloseOpenProfile }) => {
         <p className="py-3 ">Your Name</p>
         {!flag && (
           <div className="w-full flex items-center justify-between">
-            <p className="py-3">{username || "username"}</p>
+            <p className="py-3">{username || auth.reqUser?.fullName}</p>
             <BsPencil onClick={handleFlag} className="cursor-pointer" />
           </div>
         )}
@@ -50,6 +101,7 @@ const Profile = ({ handleCloseOpenProfile }) => {
         {flag && (
           <div className="w-full flex items-center justify-between">
             <input
+              onKeyPress={handleUpdateName}
               onChange={handleChange}
               className="w-[80%] outline-none border-none border-blue-700 p-2"
               type="text"

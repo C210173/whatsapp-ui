@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { TbCircleDashed } from "react-icons/tb";
 import { BiCommentDetail } from "react-icons/bi";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -28,6 +28,7 @@ import { over } from "stompjs";
 import SockJS from "sockjs-client";
 
 const HomePage = () => {
+  const chatContainerRef = useRef(null);
   const [querys, setQuerys] = useState(null);
   const [currentChat, setCurrentChat] = useState(null);
   const [content, setContent] = useState("");
@@ -176,7 +177,13 @@ const HomePage = () => {
   const handleCurrentChat = (item) => {
     setCurrentChat(item);
   };
-  console.log("current chat", currentChat);
+  useEffect(() => {
+    // Khi messages thay đổi, cuộn xuống dưới
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
   return (
     <div className="relative">
       <div className="py-14 bg-[#00a884] w-full"></div>
@@ -365,7 +372,10 @@ const HomePage = () => {
               </div>
             </div>
             {/* message section */}
-            <div className="px-10 h-[85vh] overflow-y-scroll pb-10">
+            <div
+              className="px-10 h-[85vh] overflow-y-scroll pb-10"
+              ref={chatContainerRef}
+            >
               <div className="space-y-1 flex flex-col justify-center mt-20 py-2">
                 {messages.length > 0 &&
                   messages?.map((item, i) => (

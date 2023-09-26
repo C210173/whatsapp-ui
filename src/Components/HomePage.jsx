@@ -23,6 +23,10 @@ import { currentUser, logoutAction, searchUser } from "../Redux/Auth/Action";
 import { createChat, getUsersChat } from "../Redux/Chat/Action";
 import { createMessage, getAllMessage } from "../Redux/Message/Action";
 
+// import SockJS from "sockjs-client/dist/sockjs";
+import { over } from "stompjs";
+import SockJS from "sockjs-client";
+
 const HomePage = () => {
   const [querys, setQuerys] = useState(null);
   const [currentChat, setCurrentChat] = useState(null);
@@ -36,6 +40,80 @@ const HomePage = () => {
   const { auth, chat, message } = useSelector((store) => store);
   const token = localStorage.getItem("token");
   const open = Boolean(anchorEl);
+
+  const [stompClient, setStompClient] = useState();
+  const [isConnect, setIsConnect] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [isWebSocketConnected, setWebSocketConnected] = useState(false);
+
+  const connect = () => {
+    if (!isWebSocketConnected) {
+      // const sock = new SockJS("http://localhost:5454/ws");
+      const sock = new SockJS("http://localhost:5454/ws");
+      const temp = over(sock);
+      setStompClient(temp);
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "X-XSRF-TOKEN": getCookie("XSRF-TOKEN"),
+      };
+      temp.connect(headers, onConnect, onError);
+
+      // Đánh dấu kết nối WebSocket đã được thiết lập
+      setWebSocketConnected(true);
+    }
+  };
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop().split(";").shift();
+    }
+  }
+
+  const onError = (error) => {
+    console.log("on error", error);
+  };
+
+  const onConnect = () => {
+    setIsConnect(true);
+  };
+
+  useEffect(() => {
+    if (message.newMessage && stompClient) {
+      setMessages([...messages, message.newMessage]);
+      stompClient?.send("/app/message", {}, JSON.stringify(message.newMessage));
+    }
+  }, [message.newMessage]);
+
+  const onMessageRevice = (payload) => {
+    console.log("recive message ", JSON.parse(payload.body));
+    const recivedMessage = JSON.parse(payload.body);
+    setMessages([...messages, recivedMessage]);
+  };
+
+  useEffect(() => {
+    if (isConnect && stompClient && auth.reqUser && currentChat) {
+      const subscription = stompClient.subscribe(
+        "/group/" + currentChat.id.toString(),
+        onMessageRevice
+      );
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  });
+
+  useEffect(() => {
+    connect();
+  }, []);
+
+  useEffect(() => {
+    setMessages(message.messages);
+  }, [message.messages]);
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -287,10 +365,10 @@ const HomePage = () => {
               </div>
             </div>
             {/* message section */}
-            <div className="px-10 h-[85vh] overflow-y-scroll">
+            <div className="px-10 h-[85vh] overflow-y-scroll pb-10">
               <div className="space-y-1 flex flex-col justify-center mt-20 py-2">
-                {message.messages.length > 0 &&
-                  message.messages?.map((item, i) => (
+                {messages.length > 0 &&
+                  messages?.map((item, i) => (
                     <MessageCard
                       isReqUserMessage={item.user.id !== auth.reqUser.id}
                       content={item.content}
